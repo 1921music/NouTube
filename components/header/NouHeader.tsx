@@ -77,13 +77,46 @@ const TabFavicon: React.FC<{ tab: Tab; color: string }> = ({ tab, color }) => {
   )
 }
 
+// Without onPress the pill is a dropdown trigger. Radix supplies its focus target.
+const renderPill = (label: string, onPress?: () => void) => {
+  const pill = (
+    <View className={toolbarPillLabelClass()}>
+      <NouText className="text-xs font-medium">{label}</NouText>
+    </View>
+  )
+  return onPress ? (
+    <Pressable onPress={onPress} className={toolbarPillPressableClass()}>
+      {pill}
+    </Pressable>
+  ) : (
+    <View className={toolbarPillPressableClass()}>{pill}</View>
+  )
+}
+
+function TransposeControl({ semitones, onSelect }: { semitones: number; onSelect: (value: number) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {renderPill(t('transpose.button', { value: formatTranspose(semitones) }), () => setOpen(true))}
+      {open && (
+        <TransposeModal
+          semitones={semitones}
+          onClose={() => setOpen(false)}
+          onSelect={(value) => {
+            setOpen(false)
+            onSelect(value)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
 export const NouHeader: React.FC<{
   getNoutube: () => any
   transpose?: { videoId: string; semitones: number }
   onTranspose?: (videoId: string, value: number) => void
 }> = ({ getNoutube, transpose, onTranspose }) => {
-  const [transposeTrack, setTransposeTrack] = useState<string>()
-  useEffect(() => setTransposeTrack(undefined), [transpose?.videoId])
   const tw = useTwColor()
   const autoHideHeader = useValue(settings$.autoHideHeader)
   const autoHideSidebar = useValue(settings$.autoHideSidebar)
@@ -266,23 +299,6 @@ export const NouHeader: React.FC<{
     }
   }
 
-  // Without onPress the pill is a dropdown trigger: render a plain View so the
-  // Radix trigger stays the only focus target and keyboard activation works.
-  const renderPill = (label: string, onPress?: () => void) => {
-    const pill = (
-      <View className={toolbarPillLabelClass()}>
-        <NouText className="text-xs font-medium">{label}</NouText>
-      </View>
-    )
-    return onPress ? (
-      <Pressable onPress={onPress} className={toolbarPillPressableClass()}>
-        {pill}
-      </Pressable>
-    ) : (
-      <View className={toolbarPillPressableClass()}>{pill}</View>
-    )
-  }
-
   const menuCheck = (checked: boolean) =>
     checked ? <MaterialIcons name="check" size={16} color={headerControlColor} /> : undefined
 
@@ -442,18 +458,11 @@ export const NouHeader: React.FC<{
             renderPill(playbackRateLabel, () => ui$.playbackSpeedModalOpen.set(true))
           ),
         )}
-        {transpose?.videoId ? renderPill(
-          t('transpose.button', { value: formatTranspose(transpose.semitones) }),
-          () => setTransposeTrack(transpose.videoId),
-        ) : null}
-        {transpose?.videoId && transposeTrack === transpose.videoId ? (
-          <TransposeModal
+        {transpose?.videoId ? (
+          <TransposeControl
+            key={transpose.videoId}
             semitones={transpose.semitones}
-            onClose={() => setTransposeTrack(undefined)}
-            onSelect={(value) => {
-              setTransposeTrack(undefined)
-              onTranspose?.(transpose.videoId, value)
-            }}
+            onSelect={(value) => onTranspose?.(transpose.videoId, value)}
           />
         ) : null}
         {nIf(
