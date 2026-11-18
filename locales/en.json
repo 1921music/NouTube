@@ -116,6 +116,11 @@
     "shareVideoUrl": "Video URL",
     "shareIncludePosition": "Include current position"
   },
+  "transpose": {
+    "title": "Transpose (semitones)",
+    "button": "Key {{value}}",
+    "unavailable": "Transpose is unavailable for this track."
+  },
   "update": {
     "check": "Check for updates",
     "checkHint": "See if a newer version is available",

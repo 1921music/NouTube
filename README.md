@@ -2,7 +2,19 @@
 
 Android, iOS, and Desktop app for YouTube and YouTube Music.
 
-Install from F-Droid, or download APK from GitHub.
+## Android transpose fork
+
+This fork is based on [nonbili/NouTube](https://github.com/nonbili/NouTube) commit [`907ad9c`](https://github.com/nonbili/NouTube/commit/907ad9c67761d33ba87d11c5408b2f3df9df4e20), which declares app version `0.7.10`.
+
+- The Android player adds a **Key** control for YouTube and YouTube Music. It shifts pitch from **−12 to +12 semitones** in single-semitone steps using [SoundTouchJS](https://github.com/cutterbl/SoundTouchJS), while keeping the selected playback speed.
+- The key stays set during a pause or seek and returns to `0` when the track changes.
+- The local Android build uses `jp.nonbili.noutube.transpose` and a red lowercase `t` inside the play triangle, so it can be installed alongside upstream NouTube. It uses R8 optimization, debug signing, and WebView remote debugging.
+
+See [Build and test the Android transpose fork on Windows](CONTRIBUTING.md#build-and-test-the-android-transpose-fork-on-windows) for WSL setup, APK builds, and device testing.
+
+## Upstream downloads
+
+Install upstream NouTube from F-Droid or download its APK from GitHub.
 
 [<img src="https://img.shields.io/badge/F--Droid-1976D2?style=for-the-badge&logo=f-droid"
     alt="Get it on F-Droid"

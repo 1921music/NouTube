@@ -1,1 +1,7 @@
-{}
+{
+  "transpose": {
+    "title": "移調（半音）",
+    "button": "キー {{value}}",
+    "unavailable": "この曲は移調できません。"
+  }
+}

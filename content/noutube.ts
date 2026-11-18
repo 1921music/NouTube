@@ -3,7 +3,7 @@ import {
   hideShorts,
   showShorts,
 } from './css'
-import { playDefaultAudio, restoreLastPlaying } from './player'
+import { playDefaultAudio, restoreLastPlaying, setPlaybackTranspose } from './player'
 import { getPlayerFormats } from './player-formats'
 import { navigateWatch } from './split-view'
 import { getVideoLinkTitle } from './link-title'
@@ -246,6 +246,7 @@ export function initNouTube() {
     getVideoUrl: () => getPlayer()?.getVideoUrl?.() || '',
     getPlaybackRate: () => getPlayer()?.getPlaybackRate?.(),
     setPlaybackRate: (rate: number) => getPlayer()?.setPlaybackRate?.(rate),
+    setPlaybackTranspose,
     getPlaybackQuality: () => getPlayer()?.getPlaybackQuality?.(),
     setPlaybackQuality: (quality: string) => {
       const p = getPlayer()

@@ -14,6 +14,7 @@
         "@react-native-vector-icons/material-icons": "^13.1.2",
         "@react-navigation/drawer": "^7.3.9",
         "@react-navigation/native": "^7.1.6",
+        "@soundtouchjs/audio-worklet": "2.1.1",
         "@supabase/supabase-js": "^2.54.0",
         "@tanstack/react-query": "^5.84.2",
         "cheerio": "^1.1.0",
@@ -793,6 +794,14 @@
     "@sinclair/typebox": ["@sinclair/typebox@0.27.8", "", {}, "sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@4.6.0", "", {}, "sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw=="],
+
+    "@soundtouchjs/audio-worklet": ["@soundtouchjs/audio-worklet@2.1.1", "", { "dependencies": { "@soundtouchjs/core": "2.1.1", "@soundtouchjs/interpolation-strategy-lanczos": "2.1.1", "@soundtouchjs/worklet-base": "2.1.1" } }, "sha512-itxSW62gbtDKoFo6eEr4PXzVz3oF+wCVREupFi5JiUR31tWWwCizr+2XezYD1SnkrSDfdmZvvviTtoyejYeD0Q=="],
+
+    "@soundtouchjs/core": ["@soundtouchjs/core@2.1.1", "", { "dependencies": { "@soundtouchjs/interpolation-strategy-lanczos": "2.1.1" } }, "sha512-ccBiG9/zHdM1Sx1RUkXWBgRYFI1HCiUHHwRK8gAvVNgmcafBgUzRP6Czn7pUPcHgSQus+i3Eu3DlfBR24wqspA=="],
+
+    "@soundtouchjs/interpolation-strategy-lanczos": ["@soundtouchjs/interpolation-strategy-lanczos@2.1.1", "", {}, "sha512-EX4qVLnOJ9pKfL7iSPJSJDKDAoZ4d7JO7KTKMPVo2XIhlmT/2hTZC5dWL/R9Jv3XC7kyQeteeGcogWP6DPi47A=="],
+
+    "@soundtouchjs/worklet-base": ["@soundtouchjs/worklet-base@2.1.1", "", { "dependencies": { "@soundtouchjs/core": "2.1.1" } }, "sha512-H/QMyW8yB91WX1CVSVCeOXNPdv1m71Zi0KQlvcX3f+159GNUo8kckmXV0cHpni9SCqVhCHMS/lapbBKl4tc6nQ=="],
 
     "@supabase/auth-js": ["@supabase/auth-js@2.93.3", "", { "dependencies": { "tslib": "2.8.1" } }, "sha512-JdnkHZPKexVGSNONtu89RHU4bxz3X9kxx+f5ZnR5osoCIX+vs/MckwWRPZEybAEvlJXt5xjomDb3IB876QCxWQ=="],
 

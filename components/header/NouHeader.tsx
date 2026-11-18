@@ -37,6 +37,8 @@ import { toggleDesktopMode, useDesktopMode } from '@/lib/hooks/useDesktopMode'
 import { handleSplitBack } from '@/lib/split-view'
 import { togglePictureInPicture } from '@/lib/picture-in-picture'
 import { useTwColor } from '@/lib/theme'
+import { formatTranspose } from '@/lib/transpose'
+import { TransposeModal } from '../modal/TransposeModal'
 
 const getTabLabel = (tab: { title?: string; pageUrl?: string; url?: string }) => {
   if (tab.title) {
@@ -75,7 +77,46 @@ const TabFavicon: React.FC<{ tab: Tab; color: string }> = ({ tab, color }) => {
   )
 }
 
-export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) => {
+// Without onPress the pill is a dropdown trigger. Radix supplies its focus target.
+const renderPill = (label: string, onPress?: () => void) => {
+  const pill = (
+    <View className={toolbarPillLabelClass()}>
+      <NouText className="text-xs font-medium">{label}</NouText>
+    </View>
+  )
+  return onPress ? (
+    <Pressable onPress={onPress} className={toolbarPillPressableClass()}>
+      {pill}
+    </Pressable>
+  ) : (
+    <View className={toolbarPillPressableClass()}>{pill}</View>
+  )
+}
+
+function TransposeControl({ semitones, onSelect }: { semitones: number; onSelect: (value: number) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {renderPill(t('transpose.button', { value: formatTranspose(semitones) }), () => setOpen(true))}
+      {open && (
+        <TransposeModal
+          semitones={semitones}
+          onClose={() => setOpen(false)}
+          onSelect={(value) => {
+            setOpen(false)
+            onSelect(value)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+export const NouHeader: React.FC<{
+  getNoutube: () => any
+  transpose?: { videoId: string; semitones: number }
+  onTranspose?: (videoId: string, value: number) => void
+}> = ({ getNoutube, transpose, onTranspose }) => {
   const tw = useTwColor()
   const autoHideHeader = useValue(settings$.autoHideHeader)
   const autoHideSidebar = useValue(settings$.autoHideSidebar)
@@ -235,6 +276,7 @@ export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) =
     1 +
     Number(isWeb) +
     Number(showPlaybackSpeedControl) +
+    Number(Boolean(transpose?.videoId)) +
     Number(showPlaybackQualityControl) +
     Number(showSleepTimerButton) +
     Number(!isYTMusic && queueSize > 0) +
@@ -255,23 +297,6 @@ export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) =
     } catch (error) {
       console.error('[NouTube user script execute] ' + script.name, error)
     }
-  }
-
-  // Without onPress the pill is a dropdown trigger: render a plain View so the
-  // Radix trigger stays the only focus target and keyboard activation works.
-  const renderPill = (label: string, onPress?: () => void) => {
-    const pill = (
-      <View className={toolbarPillLabelClass()}>
-        <NouText className="text-xs font-medium">{label}</NouText>
-      </View>
-    )
-    return onPress ? (
-      <Pressable onPress={onPress} className={toolbarPillPressableClass()}>
-        {pill}
-      </Pressable>
-    ) : (
-      <View className={toolbarPillPressableClass()}>{pill}</View>
-    )
   }
 
   const menuCheck = (checked: boolean) =>
@@ -433,6 +458,13 @@ export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) =
             renderPill(playbackRateLabel, () => ui$.playbackSpeedModalOpen.set(true))
           ),
         )}
+        {transpose?.videoId ? (
+          <TransposeControl
+            key={transpose.videoId}
+            semitones={transpose.semitones}
+            onSelect={(value) => onTranspose?.(transpose.videoId, value)}
+          />
+        ) : null}
         {nIf(
           showPlaybackQualityControl,
           isWeb ? (

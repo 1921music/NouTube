@@ -27,6 +27,7 @@ declare global {
     NouTubeUserStyles?: import('../lib/user-styles').UserStylesSnapshot
     NouTubeI: NouTubeI
     NouTubeToken?: string
+    NouTubeTransposeEnabled?: boolean
     // Real app visibility fed by NouTubeView.onWindowVisibilityChanged; the
     // page itself always reports "visible" (see NouWebView).
     NouTubeBackground?: boolean
