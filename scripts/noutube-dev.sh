@@ -73,7 +73,8 @@ import sys
 from pathlib import Path, PurePosixPath
 
 source = Path(sys.argv[1])
-protected = [b"node_modules", b"desktop/node_modules", b"extension/node_modules", b"android", b"assets/scripts", b".expo"]
+protected = [b"node_modules", b"desktop/node_modules", b"extension/node_modules", b"android", b"assets/scripts", b".expo",
+             b"modules/*/android/build"]
 rules = [b"P /" + path + b"/***" for path in protected]
 paths = set()
 for name in sys.stdin.buffer.read().split(b"\0"):
