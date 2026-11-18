@@ -239,6 +239,10 @@ android {
       .replace('zh-Hans', 'b+zh+Hans')
       .replace('zh-Hant', 'b+zh+Hant')
       .replace('pt-BR', 'b+pt+BR')
+      .replace('defaultConfig {', `defaultConfig {
+        if (providers.gradleProperty('noutubeDeviceTest').orNull == 'true') {
+            applicationIdSuffix '.transpose'
+        }`)
       .replace(
         /buildTypes \{([\s\S]*?)release \{([\s\S]*?)signingConfig signingConfigs\.debug/,
         `buildTypes {$1release { `,
@@ -255,7 +259,8 @@ android {
             reset()
             enable true
             universalApk false
-            include project.ext.abiCodes.keySet() as String[]
+            def buildAbis = providers.gradleProperty('reactNativeArchitectures').orNull
+            include((buildAbis ? buildAbis.split(',') : project.ext.abiCodes.keySet()) as String[])
         }
     }
     android.applicationVariants.configureEach { variant ->

@@ -169,6 +169,9 @@ class NouWebView @JvmOverloads constructor(context: Context, attrs: AttributeSet
   }
 
   init {
+    if (context.packageName == "jp.nonbili.noutube.transpose") {
+      WebView.setWebContentsDebuggingEnabled(true)
+    }
     settings.run {
       javaScriptEnabled = true
       domStorageEnabled = true

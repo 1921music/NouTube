@@ -98,17 +98,23 @@ sys.stdout.buffer.write(b"\0".join([*rules, b"H *", b""]))
 
 package_apks() {
     local source=$1 checkout=$PWD output
+    local -a architectures=()
+    if [[ -n "${NOUTUBE_ANDROID_ABI:-}" ]]; then
+        architectures=(-PreactNativeArchitectures="$NOUTUBE_ANDROID_ABI")
+    fi
     # Leave memory for Metro and native compilers, and embed JS without R8 in local test APKs.
     (cd android; ./gradlew --no-daemon --max-workers=3 :app:assembleFullRelease \
         -Pkotlin.compiler.execution.strategy=in-process \
+        -PnoutubeDeviceTest=true "${architectures[@]}" \
         -Pandroid.enableMinifyInReleaseBuilds=false -Pandroid.enableShrinkResourcesInReleaseBuilds=false \
         -Pandroid.injected.signing.store.file="$checkout/android/app/debug.keystore" \
         -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey \
         -Pandroid.injected.signing.key.password=android)
     output=android/app/build/outputs/apk/full/release
     for apk in "$output"/*.apk; do
-        cp -- "$apk" "$source/android-apk/"
-        printf 'APK: %s\n' "$source/android-apk/${apk##*/}"
+        local apk_name="transpose-${apk##*/}"
+        cp -- "$apk" "$source/android-apk/$apk_name"
+        printf 'APK: %s\n' "$source/android-apk/$apk_name"
     done
 }
 

@@ -5,6 +5,7 @@ Creates, builds in, opens, or removes the NouTube WSL development environment.
 .DESCRIPTION
 Use -Create to install the Linux tools, -Build to sync the Windows checkout and
 copy the resulting APKs to android-apk, and -Shell to run Linux tools such as adb.
+Test APKs use the separate jp.nonbili.noutube.transpose application ID.
 These actions share a six-CPU, 12 GiB systemd slice inside noutube_dev.
 Use -Remove -WhatIf to preview removal of the environment and its VHDX.
 #>
