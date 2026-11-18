@@ -81,14 +81,16 @@ if ($WhatIfPreference) { return }
 $linuxRepo = (& wsl.exe -d $distro -u root --exec wslpath -u ($repo.Replace('\', '/')) | Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or -not $linuxRepo.StartsWith('/')) { throw "Cannot locate $repo in WSL." }
 $helper = "$linuxRepo/scripts/noutube-dev.sh"
+# Let Bash read a stable copy even if the Windows checkout changes during a build.
+$runHelper = 'set -e; snapshot=$(mktemp /tmp/noutube-dev.XXXXXXXX.sh); trap ''rm -f -- "$snapshot"'' EXIT; cp -- "$1" "$snapshot"; chmod 0644 "$snapshot"; shift; bash "$snapshot" "$@"'
 if ($Create) {
     Set-Content -LiteralPath $ownerFile -Value $disk -Encoding Unicode
-    Invoke-Wsl -d $distro -u root --exec bash $helper provision
+    Invoke-Wsl -d $distro -u root --exec bash -c $runHelper noutube-dev $helper provision
     Invoke-Wsl --manage $distro --set-default-user noutube
 }
 elseif ($Shell) {
     Invoke-Wsl -d $distro -u root --exec systemd-run --quiet --scope --slice=noutube.slice runuser -l noutube
 }
 else {
-    Invoke-Wsl -d $distro -u root --exec systemd-run --quiet --scope --slice=noutube.slice runuser -u noutube -- bash $helper build $linuxRepo
+    Invoke-Wsl -d $distro -u root --exec systemd-run --quiet --scope --slice=noutube.slice runuser -u noutube -- bash -c $runHelper noutube-dev $helper build $linuxRepo
 }
