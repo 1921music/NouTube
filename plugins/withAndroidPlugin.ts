@@ -1,11 +1,21 @@
 import { ConfigPlugin, withDangerousMod, withGradleProperties, withMainActivity } from '@expo/config-plugins'
 import { withAndroidManifest, withAppBuildGradle } from '@expo/config-plugins/build/plugins/android-plugins.js'
-import { readFile, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 // Room instantiates generated databases (including WorkManager's) by reflection.
 // Preserve their names and no-argument constructors in optimized release builds.
 const ROOM_DATABASE_KEEP_RULE = '-keep class * extends androidx.room.RoomDatabase { public <init>(); }'
+
+const withTransposeAssets: ConfigPlugin = (config) =>
+  withDangerousMod(config, ['android', async (config) => {
+    const assets = path.join(config.modRequest.platformProjectRoot, 'app/src/main/assets/noutube')
+    await mkdir(assets, { recursive: true })
+    await copyFile(require.resolve('@soundtouchjs/audio-worklet/processor'), path.join(assets, 'soundtouch-processor.js'))
+    const packageDir = path.dirname(require.resolve('@soundtouchjs/audio-worklet/package.json'))
+    await copyFile(path.join(packageDir, 'LICENSE'), path.join(assets, 'soundtouch-LICENSE'))
+    return config
+  }])
 
 const withRoomDatabaseKeepRule: ConfigPlugin = (config) =>
   withDangerousMod(config, ['android', async (config) => {
@@ -180,6 +190,7 @@ const withPictureInPicture: ConfigPlugin = (config) => {
 }
 
 const withAndroidSigningConfig: ConfigPlugin = (config) => {
+  config = withTransposeAssets(config)
   config = withRoomDatabaseKeepRule(config)
   config = withPictureInPicture(config)
   config = withSecondaryDisplayMetricsFix(config)

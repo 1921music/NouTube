@@ -7,12 +7,18 @@ import { playbackRates } from '../lib/playback-rate'
 import { applyCaptionFontScale } from './captions'
 import { applyAutoplayPolicy } from './autoplay'
 import { bindPlayerMedia, readPlayerProgress } from './player-progress'
+import { createTransposer } from './transpose'
 
 export let player: any
 let curVideoId = ''
 let skipSegments: { videoId: string; segments: Segment[] } = { videoId: '', segments: [] }
 let segmentsResizeBinded = false
 const fullscreenTitleId = '_nou_fullscreen_title'
+const transposer = createTransposer((state) => emit('playback-transpose', state))
+
+export function setPlaybackTranspose(videoId: string, semitones: number) {
+  if (window.NouTubeTransposeEnabled && getTransposeTrackId(player) === videoId) transposer.set(videoId, semitones)
+}
 
 const keys = {
   playing: 'nou:playing',
@@ -58,6 +64,11 @@ function getVideoElement(player: any) {
     ? player.querySelector?.('video')
     : document.querySelector('#movie_player video') || document.querySelector('video')
   return video instanceof HTMLVideoElement ? video : null
+}
+
+function getTransposeTrackId(player: any) {
+  const id = player?.getVideoData?.()?.video_id || player?.getPlayerResponse?.()?.videoDetails?.videoId
+  return typeof id === 'string' ? id : ''
 }
 
 function renderFullscreenTitle(title: string) {
@@ -189,7 +200,7 @@ export function handleMutations(_mutations: MutationRecord[]) {
 }
 
 export function handleVideoPlayer(el: any) {
-  if (player !== el) player?.__nouPlayerCleanup?.()
+  if (player !== el) player?.__nouPlayerCleanup?.(true)
   player = el
   // YouTube re-inserts #movie_player on its own, and the mutation observer
   // hands every insertion back here. Binding twice would double the listeners
@@ -340,13 +351,22 @@ export function handleVideoPlayer(el: any) {
       recordProgress(progress, true)
     }
   }
+  const syncTranspose = () => {
+    if (!window.NouTubeTransposeEnabled) return
+    const id = getTransposeTrackId(el)
+    if (id) transposer.sync(id, getVideoElement(el))
+  }
   const syncMedia = () => {
-    if (media.sync() && [1, 2, 3].includes(el.getPlayerState?.())) recordNow()
+    if (media.sync()) {
+      syncTranspose()
+      if ([1, 2, 3].includes(el.getPlayerState?.())) recordNow()
+    }
   }
   el.__nouSyncMedia = syncMedia
   const onStateChange = async (state: number) => {
     if (!isCurrent()) return
     syncMedia()
+    syncTranspose()
     applySavedAutoplayPolicy()
     // The native mini player draws its own play/pause button, so it needs the
     // state transitions -- notifyProgress is throttled and too coarse for a
@@ -412,9 +432,13 @@ export function handleVideoPlayer(el: any) {
     }
   }
   el.addEventListener('onStateChange', onStateChange)
-  el.__nouPlayerCleanup = () => {
+  el.__nouPlayerCleanup = (replacing = false) => {
     active = false
     media.dispose()
+    if (window.NouTubeTransposeEnabled) {
+      if (replacing) transposer.detach()
+      else transposer.sync('', null)
+    }
     // YouTube can remove its player API before we observe the replacement.
     // The inactive guard above already makes any remaining callbacks inert.
     el.removeEventListener?.('onStateChange', onStateChange)

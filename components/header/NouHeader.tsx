@@ -37,6 +37,8 @@ import { toggleDesktopMode, useDesktopMode } from '@/lib/hooks/useDesktopMode'
 import { handleSplitBack } from '@/lib/split-view'
 import { togglePictureInPicture } from '@/lib/picture-in-picture'
 import { useTwColor } from '@/lib/theme'
+import { formatTranspose } from '@/lib/transpose'
+import { TransposeModal } from '../modal/TransposeModal'
 
 const getTabLabel = (tab: { title?: string; pageUrl?: string; url?: string }) => {
   if (tab.title) {
@@ -75,7 +77,13 @@ const TabFavicon: React.FC<{ tab: Tab; color: string }> = ({ tab, color }) => {
   )
 }
 
-export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) => {
+export const NouHeader: React.FC<{
+  getNoutube: () => any
+  transpose?: { videoId: string; semitones: number }
+  onTranspose?: (videoId: string, value: number) => void
+}> = ({ getNoutube, transpose, onTranspose }) => {
+  const [transposeTrack, setTransposeTrack] = useState<string>()
+  useEffect(() => setTransposeTrack(undefined), [transpose?.videoId])
   const tw = useTwColor()
   const autoHideHeader = useValue(settings$.autoHideHeader)
   const autoHideSidebar = useValue(settings$.autoHideSidebar)
@@ -235,6 +243,7 @@ export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) =
     1 +
     Number(isWeb) +
     Number(showPlaybackSpeedControl) +
+    Number(Boolean(transpose?.videoId)) +
     Number(showPlaybackQualityControl) +
     Number(showSleepTimerButton) +
     Number(!isYTMusic && queueSize > 0) +
@@ -433,6 +442,20 @@ export const NouHeader: React.FC<{ getNoutube: () => any }> = ({ getNoutube }) =
             renderPill(playbackRateLabel, () => ui$.playbackSpeedModalOpen.set(true))
           ),
         )}
+        {transpose?.videoId ? renderPill(
+          t('transpose.button', { value: formatTranspose(transpose.semitones) }),
+          () => setTransposeTrack(transpose.videoId),
+        ) : null}
+        {transpose?.videoId && transposeTrack === transpose.videoId ? (
+          <TransposeModal
+            semitones={transpose.semitones}
+            onClose={() => setTransposeTrack(undefined)}
+            onSelect={(value) => {
+              setTransposeTrack(undefined)
+              onTranspose?.(transpose.videoId, value)
+            }}
+          />
+        ) : null}
         {nIf(
           showPlaybackQualityControl,
           isWeb ? (

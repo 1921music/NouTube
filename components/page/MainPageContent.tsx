@@ -15,6 +15,8 @@ import { getNextQueueUrl, trackQueueEnded, trackQueuePlaying } from '@/lib/queue
 import { getLastPlaying } from '@/lib/last-playing'
 import { normalizeUrl } from '@/lib/url'
 import { showToast } from '@/lib/toast'
+import { isTranspose } from '@/lib/transpose'
+import type { TransposeState } from '@/content/transpose'
 import { clsx, isAndroid, isIos, isWeb, nIf } from '@/lib/utils'
 import type { WebviewTag } from 'electron'
 import { NouHeader } from '../header/NouHeader'
@@ -107,7 +109,7 @@ function restoreLastPlaying(webview: any) {
 
 const YOUTUBE_HOSTS = ['m.youtube.com', 'music.youtube.com', 'www.youtube.com', 'youtube.com', 'youtu.be']
 
-const executeQuietly = (webview: WebviewTag | null, script: string) => {
+const executeQuietly = (webview: Pick<WebviewTag, 'executeJavaScript'> | null, script: string) => {
   try {
     void webview?.executeJavaScript(script).catch?.(() => undefined)
   } catch {}
@@ -420,6 +422,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
   const playerFull = playerMode === 'full'
   const playerMini = playerMode === 'mini'
   const [playerPlaying, setPlayerPlaying] = useState(false)
+  const [transpose, setTranspose] = useState<Partial<Record<'browse' | 'player', TransposeState>>>({})
   const playerPageUrl = useValue(ui$.playerPageUrl)
   const browsePageUrl = useValue(ui$.browsePageUrl)
   const hideShorts = useValue(settings$.hideShorts)
@@ -482,6 +485,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
   const userScriptsOnStart = buildUserScriptSources(getUserStylesSnapshot(userStylesState))
   const preludeJs =
     `window.NouTubeNoAdRequests = ${isAndroid || isIos};` +
+    `window.NouTubeTransposeEnabled = ${isAndroid};` +
     `window.NouTubeInitialSettings = ${JSON.stringify(contentSettings)};` +
     `window.NouTubeHideShorts = ${hideShorts ? 'true' : 'false'};` +
     `window.NouTubePreferH264 = ${preferH264 ? 'true' : 'false'};` +
@@ -717,6 +721,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
           }
           break
         case 'onload':
+          if (isAndroid) setTranspose((current) => ({ ...current, [source]: undefined }))
           const webview = (source === 'player' ? playerRef.current : nativeRef.current) || ui$.webview.get()
           if (!isWeb) {
             // Desktop restores the last playing video through the tab url, so
@@ -776,6 +781,14 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
             settings$.playbackRate.set(data.playbackRate)
           }
           break
+        case 'playback-transpose': {
+          if (isAndroid && typeof data?.videoId === 'string' && isTranspose(data.semitones)) {
+            setTranspose((current) => ({ ...current, [source]: { videoId: data.videoId, semitones: data.semitones } }))
+            const playingSource = splitWatchView && ui$.playerUrl.get() ? 'player' : 'browse'
+            if (data.unavailable === true && source === playingSource) showToast(t('transpose.unavailable'))
+          }
+          break
+        }
         case 'playback-quality':
           if (typeof data?.playbackQuality == 'string') {
             settings$.playbackQuality.set(data.playbackQuality)
@@ -1211,7 +1224,14 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
           headerPosition === 'bottom' && 'flex-col-reverse',
         )}
       >
-        {nIf(!pictureInPicture, <NouHeader getNoutube={getNoutube} />)}
+        {nIf(!pictureInPicture, <NouHeader
+          getNoutube={getNoutube}
+          transpose={isAndroid ? transpose[splitWatchView && playerUrl ? 'player' : 'browse'] : undefined}
+          onTranspose={(videoId, semitones) => {
+            const view = splitWatchView && ui$.playerUrl.get() ? playerRef.current : nativeRef.current
+            executeQuietly(view, `window.NouTube?.setPlaybackTranspose?.(${JSON.stringify(videoId)}, ${semitones})`)
+          }}
+        />)}
         {nIf(isWeb, <SettingsModal />)}
         {isWeb ? (
           <View className="relative flex-1 min-h-0">

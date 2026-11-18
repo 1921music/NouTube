@@ -636,6 +636,16 @@ class NouTubeView(context: Context, appContext: AppContext) : ExpoView(context, 
 
           override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
             val host = request.url.host
+            if (!request.isForMainFrame && request.method == "GET" && request.url.scheme == "https" &&
+              (host == "youtube.com" || host?.endsWith(".youtube.com") == true) &&
+              request.url.path == "/__noutube/soundtouch-processor.js"
+            ) {
+              return try {
+                WebResourceResponse("application/javascript", "utf-8", view.context.assets.open("noutube/soundtouch-processor.js"))
+              } catch (_: java.io.IOException) {
+                WebResourceResponse("text/plain", "utf-8", 404, "Not Found", emptyMap(), ByteArrayInputStream(ByteArray(0)))
+              }
+            }
             if (host in BLOCK_HOSTS || (NouAdBlock.enabled && host in AD_BLOCK_HOSTS)) {
               return WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
             }
