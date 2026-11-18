@@ -18,7 +18,7 @@ const withTransposeAssets: ConfigPlugin = (config) =>
   }])
 
 const androidXmlns = 'xmlns:android="http://schemas.android.com/apk/res/android"'
-const transposeMark = '<path android:fillColor="#C40018" android:pathData="M45,45H50V49H54V53H50V59Q50,62 54,61V65Q52,66 49,66Q45,65 45,60V53H42V49H45Z"/>'
+const transposeMark = '<path android:fillColor="#C40018" android:pathData="M44,46H48V49H51V52H48V56Q48,58 51,57V59Q49,60 47,59.5Q44,59 44,56V52H41V49H44Z"/>'
 
 function iconMark(adaptive: boolean) {
   return `<vector ${androidXmlns} android:width="108dp" android:height="108dp" android:viewportWidth="100" android:viewportHeight="100">
