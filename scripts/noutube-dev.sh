@@ -96,8 +96,24 @@ sys.stdout.buffer.write(b"\0".join([*rules, b"H *", b""]))
         rsync -rlt --checksum --delete --from0 --filter='merge /dev/stdin' "$source/" "$destination/"
 }
 
+package_apks() {
+    local source=$1 checkout=$PWD output
+    # Leave memory for Metro and native compilers, and embed JS without R8 in local test APKs.
+    (cd android; ./gradlew --no-daemon --max-workers=3 :app:assembleFullRelease \
+        -Pkotlin.compiler.execution.strategy=in-process \
+        -Pandroid.enableMinifyInReleaseBuilds=false -Pandroid.enableShrinkResourcesInReleaseBuilds=false \
+        -Pandroid.injected.signing.store.file="$checkout/android/app/debug.keystore" \
+        -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey \
+        -Pandroid.injected.signing.key.password=android)
+    output=android/app/build/outputs/apk/full/release
+    for apk in "$output"/*.apk; do
+        cp -- "$apk" "$source/android-apk/"
+        printf 'APK: %s\n' "$source/android-apk/${apk##*/}"
+    done
+}
+
 build() {
-    local source=$1 checkout="$HOME/noutube" output
+    local source=$1 checkout="$HOME/noutube"
     source "$HOME/.noutube-env"
     mkdir -p "$checkout" "$source/android-apk"
     exec 9>"$HOME/.noutube-build.lock"
@@ -108,14 +124,7 @@ build() {
     bun install --frozen-lockfile
     bun bundle:es
     bun expo prebuild -p android --clean --no-install
-    (cd android; ./gradlew assembleFullRelease -Pandroid.injected.signing.store.file="$checkout/android/app/debug.keystore" \
-        -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey \
-        -Pandroid.injected.signing.key.password=android)
-    output=android/app/build/outputs/apk/full/release
-    for apk in "$output"/*.apk; do
-        cp -- "$apk" "$source/android-apk/"
-        printf 'APK: %s\n' "$source/android-apk/${apk##*/}"
-    done
+    package_apks "$source"
 }
 
 case ${1:-} in
