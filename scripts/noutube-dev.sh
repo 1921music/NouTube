@@ -102,11 +102,11 @@ package_apks() {
     if [[ -n "${NOUTUBE_ANDROID_ABI:-}" ]]; then
         architectures=(-PreactNativeArchitectures="$NOUTUBE_ANDROID_ABI")
     fi
-    # Leave memory for Metro and native compilers, and embed JS without R8 in local test APKs.
+    # Leave memory for Metro and native compilers in the WSL slice.
     (cd android; ./gradlew --no-daemon --max-workers=3 :app:assembleFullRelease \
         -Pkotlin.compiler.execution.strategy=in-process \
         -PnoutubeDeviceTest=true "${architectures[@]}" \
-        -Pandroid.enableMinifyInReleaseBuilds=false -Pandroid.enableShrinkResourcesInReleaseBuilds=false \
+        -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=false \
         -Pandroid.injected.signing.store.file="$checkout/android/app/debug.keystore" \
         -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey \
         -Pandroid.injected.signing.key.password=android)
