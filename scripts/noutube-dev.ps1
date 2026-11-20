@@ -34,8 +34,13 @@ function Get-DiskPath($registration) {
 }
 
 function Invoke-Wsl {
-    & wsl.exe @args
-    if ($LASTEXITCODE -ne 0) { throw "WSL exited with code $LASTEXITCODE ($($args[0]))." }
+    param([string[]]$Arguments)
+    # Legacy native argument passing removes embedded quotes unless they are escaped.
+    if (-not $PSNativeCommandArgumentPassing -or $PSNativeCommandArgumentPassing -eq 'Legacy') {
+        $Arguments = @($Arguments -replace '(\\*)"', '$1$1\"')
+    }
+    & wsl.exe @Arguments
+    if ($LASTEXITCODE -ne 0) { throw "WSL exited with code $LASTEXITCODE ($($Arguments[0]))." }
 }
 
 foreach ($path in @((Split-Path $installDir), $installDir, $disk, $ownerFile)) {
@@ -60,7 +65,7 @@ if ($Remove) {
         throw "Cannot verify ownership of $disk."
     }
     if ($PSCmdlet.ShouldProcess("$distro and $disk", 'Permanently delete the WSL environment')) {
-        if ($registered) { Invoke-Wsl --unregister $distro }
+        if ($registered) { Invoke-Wsl @('--unregister', $distro) }
         if (Test-Path -LiteralPath $disk -PathType Leaf) { Remove-Item -LiteralPath $disk }
         if (Test-Path -LiteralPath $ownerFile -PathType Leaf) { Remove-Item -LiteralPath $ownerFile }
     }
@@ -71,7 +76,7 @@ if ($Create -and -not $registered) {
     if (Test-Path -LiteralPath $disk) { throw "A VHDX already exists at $disk." }
     if ($WhatIfPreference) { return }
     New-Item -ItemType Directory -Path (Split-Path $installDir) -Force | Out-Null
-    Invoke-Wsl --install Ubuntu-24.04 --name $distro --location $installDir --version 2 --no-launch
+    Invoke-Wsl @('--install', 'Ubuntu-24.04', '--name', $distro, '--location', $installDir, '--version', '2', '--no-launch')
     if (-not (Test-Path -LiteralPath $disk -PathType Leaf)) { throw "WSL did not create $disk." }
 }
 elseif (-not $registered) {
@@ -86,12 +91,13 @@ $helper = "$linuxRepo/scripts/noutube-dev.sh"
 $runHelper = 'set -e; snapshot=$(mktemp /tmp/noutube-dev.XXXXXXXX.sh); trap ''rm -f -- "$snapshot"'' EXIT; cp -- "$1" "$snapshot"; chmod 0644 "$snapshot"; shift; bash "$snapshot" "$@"'
 if ($Create) {
     Set-Content -LiteralPath $ownerFile -Value $disk -Encoding Unicode
-    Invoke-Wsl -d $distro -u root --exec bash -c $runHelper noutube-dev $helper provision
-    Invoke-Wsl --manage $distro --set-default-user noutube
+    Invoke-Wsl @('-d', $distro, '-u', 'root', '--exec', 'bash', '-c', $runHelper, 'noutube-dev', $helper, 'provision')
+    Invoke-Wsl @('--manage', $distro, '--set-default-user', 'noutube')
 }
 elseif ($Shell) {
-    Invoke-Wsl -d $distro -u root --exec systemd-run --quiet --scope --slice=noutube.slice runuser -l noutube
+    Invoke-Wsl @('-d', $distro, '-u', 'root', '--exec', 'systemd-run', '--quiet', '--scope', '--slice=noutube.slice', 'runuser', '-l', 'noutube')
 }
 else {
-    Invoke-Wsl -d $distro -u root --exec systemd-run --quiet --scope --slice=noutube.slice runuser -u noutube -- bash -c $runHelper noutube-dev $helper build $linuxRepo
+    # Pass the Linux arguments as an array so PowerShell does not consume the runuser separator.
+    Invoke-Wsl @('-d', $distro, '-u', 'root', '--exec', 'systemd-run', '--quiet', '--scope', '--slice=noutube.slice', 'runuser', '-u', 'noutube', '--', 'bash', '-c', $runHelper, 'noutube-dev', $helper, 'build', $linuxRepo)
 }

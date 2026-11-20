@@ -38,4 +38,8 @@
             android:pathData="M900 963c29 -107 150 -169 254 -129 25 9 50 24 56 32 16 18 11 18 -33 -1 -54 -22 -126 -19 -178 8 -39 21 -53 35 -96 103 -10 16 -10 13 -3 -13z"
             android:fillColor="#000000" />
     </group>
+    <group android:scaleX="1.25" android:scaleY="1.25" android:translateX="81" android:translateY="92">
+        <path android:fillColor="#000000"
+            android:pathData="M44,46H48V49H51V52H48V56Q48,58 51,57V59Q49,60 47,59.5Q44,59 44,56V52H41V49H44Z" />
+    </group>
 </vector>

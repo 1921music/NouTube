@@ -17,56 +17,6 @@ const withTransposeAssets: ConfigPlugin = (config) =>
     return config
   }])
 
-const androidXmlns = 'xmlns:android="http://schemas.android.com/apk/res/android"'
-const transposeMark = '<path android:fillColor="#C40018" android:pathData="M44,46H48V49H51V52H48V56Q48,58 51,57V59Q49,60 47,59.5Q44,59 44,56V52H41V49H44Z"/>'
-
-function iconMark(adaptive: boolean) {
-  return `<vector ${androidXmlns} android:width="108dp" android:height="108dp" android:viewportWidth="100" android:viewportHeight="100">
-${adaptive ? `<group android:pivotX="50" android:pivotY="50" android:scaleX="0.675" android:scaleY="0.675">${transposeMark}</group>` : transposeMark}
-</vector>`
-}
-
-function markedIcon(base: string, mark: string) {
-  return `<layer-list ${androidXmlns}>
-    <item android:drawable="@mipmap/${base}"/>
-    <item android:drawable="@drawable/${mark}"/>
-</layer-list>`
-}
-
-const withTransposeLauncherIcon: ConfigPlugin = (config) => {
-  config = withAndroidManifest(config, (config) => {
-    const application = config.modResults.manifest.application?.[0]
-    if (application) {
-      application.$['android:icon'] = '${noutubeLauncherIcon}'
-      application.$['android:roundIcon'] = '${noutubeRoundLauncherIcon}'
-    }
-    return config
-  })
-  return withDangerousMod(config, ['android', async (config) => {
-    const res = path.join(config.modRequest.platformProjectRoot, 'app/src/main/res')
-    const adaptive = `<adaptive-icon ${androidXmlns}>
-    <background android:drawable="@color/iconBackground"/>
-    <foreground android:drawable="@drawable/noutube_transpose_foreground"/>
-    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
-</adaptive-icon>`
-    const resources = {
-      'drawable/noutube_transpose_mark.xml': iconMark(false),
-      'drawable/noutube_transpose_mark_adaptive.xml': iconMark(true),
-      'drawable/noutube_transpose_foreground.xml': markedIcon('ic_launcher_foreground', 'noutube_transpose_mark_adaptive'),
-      'mipmap-anydpi/noutube_transpose_launcher.xml': markedIcon('ic_launcher', 'noutube_transpose_mark'),
-      'mipmap-anydpi/noutube_transpose_launcher_round.xml': markedIcon('ic_launcher_round', 'noutube_transpose_mark'),
-      'mipmap-anydpi-v26/noutube_transpose_launcher.xml': adaptive,
-      'mipmap-anydpi-v26/noutube_transpose_launcher_round.xml': adaptive,
-    }
-    for (const [name, xml] of Object.entries(resources)) {
-      const target = path.join(res, name)
-      await mkdir(path.dirname(target), { recursive: true })
-      await writeFile(target, `${xml}\n`)
-    }
-    return config
-  }])
-}
-
 const withRoomDatabaseKeepRule: ConfigPlugin = (config) =>
   withDangerousMod(config, ['android', async (config) => {
     const rulesPath = path.join(config.modRequest.platformProjectRoot, 'app/proguard-rules.pro')
@@ -241,7 +191,6 @@ const withPictureInPicture: ConfigPlugin = (config) => {
 
 const withAndroidSigningConfig: ConfigPlugin = (config) => {
   config = withTransposeAssets(config)
-  config = withTransposeLauncherIcon(config)
   config = withRoomDatabaseKeepRule(config)
   config = withPictureInPicture(config)
   config = withSecondaryDisplayMetricsFix(config)
@@ -291,12 +240,9 @@ android {
       .replace('zh-Hant', 'b+zh+Hant')
       .replace('pt-BR', 'b+pt+BR')
       .replace('defaultConfig {', `defaultConfig {
-        def noutubeDeviceTest = providers.gradleProperty('noutubeDeviceTest').orNull == 'true'
-        if (noutubeDeviceTest) {
+        if (providers.gradleProperty('noutubeDeviceTest').orNull == 'true') {
             applicationIdSuffix '.transpose'
-        }
-        manifestPlaceholders.noutubeLauncherIcon = noutubeDeviceTest ? '@mipmap/noutube_transpose_launcher' : '@mipmap/ic_launcher'
-        manifestPlaceholders.noutubeRoundLauncherIcon = noutubeDeviceTest ? '@mipmap/noutube_transpose_launcher_round' : '@mipmap/ic_launcher_round'`)
+        }`)
       .replace(
         /buildTypes \{([\s\S]*?)release \{([\s\S]*?)signingConfig signingConfigs\.debug/,
         `buildTypes {$1release { `,

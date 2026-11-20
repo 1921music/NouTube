@@ -1,4 +1,4 @@
-# <img src="desktop/icon.png" align="top" height="44"> NouTube
+# <img src="assets/images/icon.png" align="top" height="44" alt="NouTube Transpose icon"> NouTube
 
 Android, iOS, and Desktop app for YouTube and YouTube Music.
 
@@ -58,7 +58,7 @@ Or use the browser extension on Firefox and Chrome.
 - Inject code to block ads
 - Hook playback controls and support playing in background
 
-## Screenshots
+## Upstream screenshots
 
 <img src="metadata/en-US/images/phoneScreenshots/1.jpg" width="240" alt="Ad-free playback"> <img src="metadata/en-US/images/phoneScreenshots/2.jpg" width="240" alt="Background playback"> <img src="metadata/en-US/images/phoneScreenshots/3.jpg" width="240" alt="Channel feeds">
 

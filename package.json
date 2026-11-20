@@ -6,8 +6,8 @@
   "name": "noutube",
   "private": true,
   "main": "index.js",
-  "version": "0.7.10",
-  "versionCode": 90,
+  "version": "0.7.11",
+  "versionCode": 91,
   "buildNumber": "11",
   "iosVersion": "0.7.6",
   "scripts": {
